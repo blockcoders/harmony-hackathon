@@ -1,0 +1,22 @@
+{
+  "name": "hackaton",
+  "version": "1.0.0",
+  "description": "Harmony hackaton",
+  "main": "index.js",
+  "scripts": {
+    "start": "npm run build && node index.js",
+    "build": "tsc --build"
+  },
+  "author": "fsirni@gmail.com",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^4.8.3"
+  },
+  "dependencies": {
+    "@harmony-js/network": "^0.1.56",
+    "@harmony-js/transaction": "^0.1.56",
+    "@harmony-js/utils": "^0.1.56",
+    "harmony-marketplace-sdk": "^0.1.0-rc.3",
+    "tslib": "^2.4.0"
+  }
+}
