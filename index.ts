@@ -20,7 +20,7 @@ const SYMBOL = "Blockcoders";
 const TOKEN_URI = "https://www.fakeURI.com";
 
 const WALLET = new PrivateKey(
-  new HttpProvider(HarmonyShards.SHARD_0_DEVNET),
+  HarmonyShards.SHARD_0_DEVNET,
   PRIVATE_KEY,
   4
 );
@@ -74,10 +74,16 @@ async function main() {
   // A contract instance
   const contract = new HRC721(hrc721.addr, hrc721.abi, WALLET);
 
+  const mintTx = await contract.mint(WALLET.accounts[0].toLowerCase(), 1, {
+    gasPrice: new Unit('30').asGwei().toWei(),
+    gasLimit: 3500000,
+  })
+  console.info('HRC721 mint tx hash: ', mintTx.id)
+  
   // returns a string value.
   const owner = await contract.ownerOf("1");
 
   console.log(owner);
 }
 
-main();
+main().catch(console.error);
