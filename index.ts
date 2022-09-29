@@ -1,4 +1,3 @@
-import { HttpProvider } from "@harmony-js/network";
 import { Unit } from "@harmony-js/utils";
 import { Transaction } from "@harmony-js/transaction";
 import {
@@ -12,32 +11,40 @@ import { readFile } from "fs";
 import { join } from "path";
 
 const PRIVATE_KEY =
-  process.env.PRIVATE_KEY ||
   "4b28f8aece00c52ea7dab16d6297f9aa29f71b0e0c2707779f54cbe417078b17";
+const OWNER_PK =
+  "1fc15e16a5b8c7d2b1568a7a860dd2326d93206438b6f789e803cbbb58f23b86";
 
+const WALLET = new PrivateKey(HarmonyShards.SHARD_0_DEVNET, PRIVATE_KEY, 4);
+const OWNER_WALLET = new PrivateKey(HarmonyShards.SHARD_0_DEVNET, OWNER_PK, 4);
+
+const WALLET_ADDRESS = WALLET.accounts[0].toLowerCase();
+const OWNER_ADDRESS = OWNER_WALLET.accounts[0].toLowerCase();
+
+const namesMap = new Map<string, string>();
+namesMap.set(WALLET_ADDRESS, "Walter White");
+namesMap.set(OWNER_ADDRESS, "Saul Goodman");
+
+const DEFAULT_GAS = {
+  gasPrice: new Unit("30").asGwei().toWei(),
+  gasLimit: 3500000,
+};
+
+const TOKEN_ID = 1;
 const NAME = "Blockcoders NFT";
 const SYMBOL = "Blockcoders";
 const TOKEN_URI = "https://www.fakeURI.com";
 
-const WALLET = new PrivateKey(
-  HarmonyShards.SHARD_0_DEVNET,
-  PRIVATE_KEY,
-  4
-);
 class DeployContract extends BaseContract {
   constructor(abi: any[], wallet: ContractProviderType) {
     super("0x", abi, wallet);
   }
 
   public deploy(bytecode: string, args: any[] = []): Promise<Transaction> {
-    console.log("Deploy with args", args);
     return this.send(
       "contractConstructor",
       [{ data: bytecode, arguments: args }],
-      {
-        gasPrice: new Unit("30").asGwei().toWei(),
-        gasLimit: 3500000,
-      }
+      DEFAULT_GAS
     );
   }
 }
@@ -63,27 +70,78 @@ export async function deployContract(
   const contract = new DeployContract(abi, wallet);
   const tx = await contract.deploy(bytecode, args);
   const addr = tx?.receipt?.contractAddress?.toLowerCase() ?? "";
-
-  console.info(`HRC721 deployed on address: ${addr}`);
-
   return { addr, abi };
 }
 
 async function main() {
+  console.log("\n================= Let's play with NFTs =================");
+  console.log("\nPRE-REQUISITES:");
+  console.log("\tHave a contract deployed (abi and address)");
+  console.log("\tHave a wallet with some funds");
+  console.log("\tMint a token to your wallet");
+
+  console.log("\nDeploying NFT (HRC721) contract...");
   const hrc721 = await deployContract(WALLET, [NAME, SYMBOL, TOKEN_URI]);
-  // A contract instance
+  console.log(`\tHRC721 - Deployed on address: ${hrc721.addr}`);
+
+  // Calls to the contract signed by the WALLET
   const contract = new HRC721(hrc721.addr, hrc721.abi, WALLET);
+  // Calls to the contract signed by the OWNER_WALLET
+  const ownerSignedContract = new HRC721(hrc721.addr, hrc721.abi, OWNER_WALLET);
 
-  const mintTx = await contract.mint(WALLET.accounts[0].toLowerCase(), 1, {
-    gasPrice: new Unit('30').asGwei().toWei(),
-    gasLimit: 3500000,
-  })
-  console.info('HRC721 mint tx hash: ', mintTx.id)
-  
-  // returns a string value.
-  const owner = await contract.ownerOf("1");
+  const mintTx = await contract.mint(OWNER_ADDRESS, TOKEN_ID, DEFAULT_GAS);
+  console.log("\tHRC721 - Mint transaction hash: ", mintTx.id);
 
-  console.log(owner);
+  const owner = await contract.ownerOf(TOKEN_ID);
+  console.log(
+    `\tHRC721 - The owner of the token with id = ${TOKEN_ID} is: ${namesMap.get(owner.toLowerCase())}`
+  );
+
+  console.log("\nLet's call some methods...");
+
+  const balance = await contract.balanceOf(OWNER_ADDRESS);
+  console.log(`\tHRC721 - Balance of ${namesMap.get(OWNER_ADDRESS)}: ${balance} token(s)`);
+
+  const uri = await contract.tokenURI(TOKEN_ID);
+  console.log(`\tHRC721 - Token URI: ${uri}`);
+
+  const symbol = await contract.symbol();
+  console.log(`\tHRC721 - Symbol: ${symbol}`);
+
+  const name = await contract.name();
+  console.log(`\tHRC721 - Name: ${name}`);
+
+  console.log("\nLet's transfer the token to another address...");
+
+  // Same as before, but signed by the owner
+  const balanceOfOwner = await ownerSignedContract.balanceOf(OWNER_ADDRESS);
+  console.log(
+    `\tHRC721 - Balance of ${namesMap.get(OWNER_ADDRESS)} is: ${balanceOfOwner} token(s)`
+  );
+
+  await ownerSignedContract.approve(WALLET_ADDRESS, TOKEN_ID, DEFAULT_GAS);
+  console.log(
+    `\tHRC721 - Approved ${namesMap.get(WALLET_ADDRESS)} to transfer token ${TOKEN_ID}`
+  );
+
+  await contract.transferFrom(
+    OWNER_ADDRESS,
+    WALLET_ADDRESS,
+    TOKEN_ID,
+    DEFAULT_GAS
+  );
+  console.log(
+    `\tHRC721 - Transferred token with id ${TOKEN_ID} from ${namesMap.get(OWNER_ADDRESS)} to ${namesMap.get(WALLET_ADDRESS)}`
+  );
+
+  const owner2 = await contract.ownerOf(1);
+  console.log(
+    `\tHRC721 - The owner of the token with id = ${TOKEN_ID} is: ${namesMap.get(owner2.toLowerCase())}`
+  );
+
+  console.log("\nLet's burn the token");
+  const burnTx = await contract.burn(TOKEN_ID);
+  console.log("\tHRC721 - Burn transaction hash: ", burnTx.id);
 }
 
 main().catch(console.error);
