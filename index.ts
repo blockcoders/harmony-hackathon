@@ -1,4 +1,3 @@
-import { HttpProvider } from "@harmony-js/network";
 import { Unit } from "@harmony-js/utils";
 import { Transaction } from "@harmony-js/transaction";
 import {
