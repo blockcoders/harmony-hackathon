@@ -94,13 +94,13 @@ async function main() {
 
   const owner = await contract.ownerOf(TOKEN_ID);
   console.log(
-    `\tHRC721 - The owner of the token with id = ${TOKEN_ID} is: ${namesMap.get(owner.toLowerCase())}`
+    `\tHRC721 - The owner of the token with id ${TOKEN_ID} is ${namesMap.get(owner.toLowerCase())}`
   );
 
   console.log("\nLet's call some methods...");
 
   const balance = await contract.balanceOf(OWNER_ADDRESS);
-  console.log(`\tHRC721 - Balance of ${namesMap.get(OWNER_ADDRESS)}: ${balance} token(s)`);
+  console.log(`\tHRC721 - Balance of ${namesMap.get(OWNER_ADDRESS)} is ${balance} token(s)`);
 
   const uri = await contract.tokenURI(TOKEN_ID);
   console.log(`\tHRC721 - Token URI: ${uri}`);
@@ -116,12 +116,12 @@ async function main() {
   // Same as before, but signed by the owner
   const balanceOfOwner = await ownerSignedContract.balanceOf(OWNER_ADDRESS);
   console.log(
-    `\tHRC721 - Balance of ${namesMap.get(OWNER_ADDRESS)} is: ${balanceOfOwner} token(s)`
+    `\tHRC721 - Balance of ${namesMap.get(OWNER_ADDRESS)} is ${balanceOfOwner} token(s)`
   );
 
   await ownerSignedContract.approve(WALLET_ADDRESS, TOKEN_ID, DEFAULT_GAS);
   console.log(
-    `\tHRC721 - Approved ${namesMap.get(WALLET_ADDRESS)} to transfer token ${TOKEN_ID}`
+    `\tHRC721 - Approved ${namesMap.get(WALLET_ADDRESS)} to transfer tokenId ${TOKEN_ID}`
   );
 
   await contract.transferFrom(
@@ -134,9 +134,9 @@ async function main() {
     `\tHRC721 - Transferred token with id ${TOKEN_ID} from ${namesMap.get(OWNER_ADDRESS)} to ${namesMap.get(WALLET_ADDRESS)}`
   );
 
-  const owner2 = await contract.ownerOf(1);
+  const newOwner = await contract.ownerOf(TOKEN_ID);
   console.log(
-    `\tHRC721 - The owner of the token with id = ${TOKEN_ID} is: ${namesMap.get(owner2.toLowerCase())}`
+    `\tHRC721 - The new owner of the token with id ${TOKEN_ID} is ${namesMap.get(newOwner.toLowerCase())}`
   );
 
   console.log("\nLet's burn the token");
