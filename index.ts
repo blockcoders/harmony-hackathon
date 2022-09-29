@@ -6,6 +6,7 @@ import {
   HRC721,
   ContractProviderType,
   BaseContract,
+  HarmonyShards,
 } from "harmony-marketplace-sdk";
 import { readFile } from "fs";
 import { join } from "path";
@@ -16,9 +17,8 @@ const PRIVATE_KEY =
 const OWNER_PK =
   "1fc15e16a5b8c7d2b1568a7a860dd2326d93206438b6f789e803cbbb58f23b86";
 
-const DEVNET_URL = "https://api.s0.ps.hmny.io";
-const WALLET = new PrivateKey(new HttpProvider(DEVNET_URL), PRIVATE_KEY, 4);
-const OWNER_WALLET = new PrivateKey(new HttpProvider(DEVNET_URL), OWNER_PK, 4);
+const WALLET = new PrivateKey(HarmonyShards.SHARD_0_DEVNET, PRIVATE_KEY, 4);
+const OWNER_WALLET = new PrivateKey(HarmonyShards.SHARD_0_DEVNET, OWNER_PK, 4);
 
 const WALLET_ADDRESS = WALLET.accounts[0].toLowerCase();
 const OWNER_ADDRESS = OWNER_WALLET.accounts[0].toLowerCase();
